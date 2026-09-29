@@ -1,4 +1,4 @@
-from . import AnyObject, Integer, Object, String
+from . import AnyObject, Integer, Object, String, Boolean
 
 
 def test_do_not_coerce() -> None:
@@ -82,7 +82,10 @@ def test_modify_schema() -> None:
 
 def test_unwrapped_value() -> None:
     schema = Object(
-        {"name": String().optional().nullable().default("Alex")},
+        {
+            "name": String().optional().nullable().default("Alex"),
+            "likesJava": Boolean().optional(),
+        },
         additional_properties=True,
     )
     result = schema.validate({"age": 5})
@@ -100,3 +103,17 @@ def test_unwrapped_value() -> None:
     assert isinstance(data, dict)
     assert data["name"] == "Alex"
     assert data["age"] == 5
+
+    result = schema.validate({"name": None, "likesJava": True})
+    assert result
+
+    data = result.unwrap()
+    assert isinstance(data, dict)
+    assert data["likesJava"] is True
+
+    result = schema.validate({"name": None, "likesJava": False})
+    assert result
+
+    data = result.unwrap()
+    assert isinstance(data, dict)
+    assert data["likesJava"] is False

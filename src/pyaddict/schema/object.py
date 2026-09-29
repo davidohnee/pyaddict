@@ -123,9 +123,9 @@ class _Object[R](ISchemaType["_Object[R]", R]):
                     schema,
                     path=[*path, key],
                 )
-                if item_result and item_result.value:
+                if item_result and item_result.value is not None:
                     result_dict[key] = item_result.value
-                if not item_result and item_result.error:
+                if not item_result and item_result.error is not None:
                     failed.append(item_result.error)
 
             if failed:
