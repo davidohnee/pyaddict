@@ -235,7 +235,7 @@ class JDict(dict):
 
         """
         try:
-            return type_(self._get_item(key))
+            return type_(self._get_item(key))  # ty: ignore[too-many-positional-arguments]
         except:  # noqa: E722
             return default or type_()
 

@@ -4,12 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.3] - 2026-09-29
+
+### Fixed
+
+- Schema
+  - Object
+    - `unrawp` would omit falsy values (`False`, `0`)
+
 ## [2.1.2] - 2026-07-09
 
 ### Fixed
 
 - JDict
-  - `optional_get` would return the default value (or `None`) for false-ish values (like `0`)
+  - `optional_get` would return the default value (or `None`) for falsy values (like `0`)
 
 ## [2.1.1] - 2026-07-08
 
@@ -87,53 +95,53 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - Schema
-    - apply default value (if configured), even if the property is missing
+  - apply default value (if configured), even if the property is missing
 
 ## [1.2.1] - 2025-04-07
 
 ### Fixed
 
 - Schema
-    - additional properties were omitted in `result.unwrap()`, even if additional properties were allowed
+  - additional properties were omitted in `result.unwrap()`, even if additional properties were allowed
 
 ## [1.2.0] - 2025-03-24
 
 ### Added
 
 - Schema
-    - `OneOf` now provides meaningful error descriptions
+  - `OneOf` now provides meaningful error descriptions
 
 ### Fixed
 
 - Schema
-    - nullable schemas could cause runtime errors
+  - nullable schemas could cause runtime errors
 
 ## [1.1.0] - 2024-08-15
 
 ### Added
 
 - Schema
-    - constant values can now be set (`Object({"static": 5, dynamic: Integer()})`)
-    - added the parameter `nullable=True` `optional()`
+  - constant values can now be set (`Object({"static": 5, dynamic: Integer()})`)
+  - added the parameter `nullable=True` `optional()`
 
 ### Fixed
 
 - Schema
-    - nullable schemas could cause runtime errors
+  - nullable schemas could cause runtime errors
 
 ## [1.0.5] - 2023-01-14
 
 ### Fixed
 
 - Schema
-    - `enum` with multiple values specified raised an error
+  - `enum` with multiple values specified raised an error
 
 ## [1.0.4] - 2023-01-13
 
 ### Added
 
 - Schema
-    - Added `OneOf`
+  - Added `OneOf`
 
 ## [1.0.3] - 2023-01-11
 
@@ -144,27 +152,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 
 - Schema
-    - Minor fixes
+  - Minor fixes
 
 ## [1.0.2] - 2022-12-28
 
 ### Added
 
 - Schema
-    - String: now supports `.url()`, providing a default regex
+  - String: now supports `.url()`, providing a default regex
 
 ## [1.0.1] - 2022-12-24
 
 ### Changed
 
 - Schema
-    - Object: additional properties are now disallowed by default
+  - Object: additional properties are now disallowed by default
 
 ### Fixed
 
 - Schema
-    - inclusive min/max didn't work
-    - typing failed when working with min/max/enum
+  - inclusive min/max didn't work
+  - typing failed when working with min/max/enum
 
 ## [1.0.0] - 2022-12-23
 
