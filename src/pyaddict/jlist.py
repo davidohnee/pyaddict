@@ -3,7 +3,7 @@
 from typing import Any, overload
 
 from pyaddict.chain import ChainLink, traverse
-from pyaddict.common import JArray
+from pyaddict.common import JArray, ensure, ensure_cast, expect, optional_get
 
 
 class JList(list):
@@ -34,7 +34,7 @@ class JList(list):
 
     def chain(self) -> "JList":
         """
-        Enable chaining.
+        Enable chaining (nested access).
 
         Returns:
             self
@@ -45,7 +45,7 @@ class JList(list):
 
     def no_chain(self) -> "JList":
         """
-        Disable chaining.
+        Disable chaining (nested access).
 
         Returns:
             self
@@ -65,83 +65,237 @@ class JList(list):
         self, key: int | str, type_: type[T], default: T | None = None
     ) -> T | None: ...
 
-    def optional_get[T](
-        self, key: int | str, type_: type[T] | None = None, default: T | None = None
-    ) -> T | None:
+    @overload
+    def optional_get[V](
+        self,
+        key: int | str,
+        type_: type[list],
+        default: list[V] | None = None,
+        *,
+        value_type: type[V],
+    ) -> list[V | None] | None: ...
+
+    @overload
+    def optional_get[K, V](
+        self,
+        key: int | str,
+        type_: type[dict],
+        default: dict[K, V] | None = None,
+        *,
+        key_type: type[K],
+        value_type: type[V],
+    ) -> dict[K, V | None] | None: ...
+
+    def optional_get[T, K, V](
+        self,
+        key: int | str,
+        type_: type[T] | None = None,
+        default: T | None = None,
+        *,
+        key_type: type[K] | None = None,
+        value_type: type[V] | None = None,
+    ) -> Any | None:
         """
         Get the value if it matches the target type.
 
+        Args:
+            key: path to the `value`.
+            type_: expected type of `value`.
+            default: default value to use.
+            key_type: expected type of all keys of `value`,
+                if `value` is a `dict`, and `key_type` is not `None`.
+            value_type: expected type of all values of `value`,
+                if `value` is a `dict` or `list`, and `value_type` is not `None`.
+
         Returns:
-            value at path: if value found and has the expected type.
-            default: if value not found or not the expected type.
-            None: if value not found and no default provided.
+            `value` at `key`: if `value` found and has the expected `type`.
+            `default`: if `value` not found or not of the expected `type`.
+            `None`: if `value` not found and no `default` provided.
 
         Raises:
-            KeyError: if chaining is enabled and the key
+            `KeyError`: if `chaining` is enabled and the `key`
                 (unless it is optional or the last one) cannot be found.
-            IndexError: if chaining is enabled and the index
+            `IndexError`: if `chaining` is enabled and the `index`
                 (unless it is optional or the last one) is out of range.
-            TypeError: if chaining is enabled and the list is indexed with a string
+            `TypeError`: if `chaining` is enabled and a `list` is indexed with a string.
 
         """
         value = self._get_item(key, optional=True)
-        if type_ and not isinstance(value, type_):
-            return default
-        return value or default
+        return optional_get(
+            value, type_, default, key_type=key_type, value_type=value_type
+        )
 
-    def ensure[T](self, key: int | str, type_: type[T], default: T | None = None) -> T:
+    @overload
+    def ensure[T](self, key: int | str, type_: type[T]) -> T: ...
+
+    @overload
+    def ensure[T](self, key: int | str, type_: type[T], default: T) -> T: ...
+
+    @overload
+    def ensure[V](
+        self,
+        key: int | str,
+        type_: type[list],
+        default: list[V] | None = None,
+        *,
+        value_type: type[V],
+    ) -> list[V]: ...
+
+    @overload
+    def ensure[K, V](
+        self,
+        key: int | str,
+        type_: type[dict],
+        default: dict[K, V] | None = None,
+        *,
+        key_type: type[K],
+        value_type: type[V],
+    ) -> dict[K, V]: ...
+
+    def ensure[T, K, V](
+        self,
+        key: int | str,
+        type_: type[T],
+        default: T | None = None,
+        *,
+        key_type: type[K] | None = None,
+        value_type: type[V] | None = None,
+    ) -> T:
         """
         Get the value if it matches the target type.
 
+        Args:
+            key: path to the `value`.
+            type_: expected type of `value`.
+            default: default value to use.
+            key_type: expected type of all keys of `value`,
+                if `value` is a `dict`, and `key_type` is not `None`.
+            value_type: expected type of all values of `value`,
+                if `value` is a `dict` or `list`, and `value_type` is not `None`.
+
         Returns:
-            value at path: if value found and has the expected type.
-            default: if value not found or not the expected type.
-            type(): if value not found and no default provided.
+            `value` at `key`: if `value` found and has the expected `type`.
+            `default`: if `value` not found or not of the expected `type`.
+            `type()`: if `value` not found and no `default` provided.
 
         """
         try:
             value = self._get_item(key)
-            if isinstance(value, type_):
-                return value
-            return default or type_()
+            return ensure(
+                value, type_, default, key_type=key_type, value_type=value_type
+            )
         except:  # noqa: E722
             return default or type_()
 
-    def ensure_cast[T](
-        self, key: int | str, type_: type[T], default: T | None = None
-    ) -> T:
+    @overload
+    def ensure_cast[T](self, key: int | str, type_: type[T]) -> T: ...
+
+    @overload
+    def ensure_cast[T](self, key: int | str, type_: type[T], default: T) -> T: ...
+
+    @overload
+    def ensure_cast[V](
+        self,
+        key: int | str,
+        type_: type[list],
+        default: list[V] | None = None,
+        *,
+        value_type: type[V],
+    ) -> list[V]: ...
+
+    @overload
+    def ensure_cast[K, V](
+        self,
+        key: int | str,
+        type_: type[dict],
+        default: dict[K, V] | None = None,
+        *,
+        key_type: type[K],
+        value_type: type[V],
+    ) -> dict[K, V]: ...
+
+    def ensure_cast[T, K, V](
+        self,
+        key: int | str,
+        type_: type[T],
+        default: T | None = None,
+        *,
+        key_type: type[K] | None = None,
+        value_type: type[V] | None = None,
+    ) -> Any:
         """
-        Get the value and try to cast it to the target type.
+        Get the `value` and try to cast it to the target type.
+
+        Args:
+            key: path to the `value`.
+            type_: expected type of `value`.
+            default: default value to use.
+            key_type: expected type of all keys of `value`,
+                if `value` is a `dict`, and `key_type` is not `None`.
+            value_type: expected type of all values of `value`,
+                if `value` is a `dict` or `list`, and `value_type` is not `None`.
 
         Returns:
-            value at path: if value found.
-            default: if value not found.
-            type(): if value not found and no default provided.
+            `value` at `key`: if `value` found.
+            `default`: if `value` not found.
+            `type()`: if `value` not found and no `default` provided.
 
         """
         try:
-            return type_(self._get_item(key))  # ty: ignore[too-many-positional-arguments]
+            value = self._get_item(key)
+            return ensure_cast(
+                value, type_, default, key_type=key_type, value_type=value_type
+            )
 
         except:  # noqa: E722
             return default or type_()
 
-    def expect[T](self, key: int | str, type_: type[T]) -> T:
+    @overload
+    def expect[T](self, key: int | str, type_: type[T]) -> T: ...
+
+    @overload
+    def expect[V](
+        self, key: int | str, type_: type[list], *, value_type: type[V]
+    ) -> list[V]: ...
+
+    @overload
+    def expect[K, V](
+        self,
+        key: int | str,
+        type_: type[dict],
+        *,
+        key_type: type[K],
+        value_type: type[V],
+    ) -> dict[K, V]: ...
+
+    def expect[T, K, V](
+        self,
+        key: int | str,
+        type_: type[T],
+        *,
+        key_type: type[K] | None = None,
+        value_type: type[V] | None = None,
+    ) -> Any:
         """
-        Expect the value to be present and of the specified type.
+        Expect the `value` to be present and of the specified `type`.
+
+        Args:
+            key: path to the `value`.
+            type_: expected type of `value`.
+            key_type: expected type of all keys of `value`,
+                if `value` is a `dict`, and `key_type` is not `None`.
+            value_type: expected type of all values of `value`,
+                if `value` is a `dict` or `list`, and `value_type` is not `None`.
 
         Returns:
-            value at path.
+            `value` at path.
 
         Raises:
-            IndexError: if the index is out of range.
-            TypeError: if the value is not of the expected type.
-            TypeError: if the list is indexed with a string (e.g. when chaining)
-            ValueError: if a string key or path is specified, but chaining is
-                disabled.
-            KeyError: if chaining is enabled and the key cannot be found.
+            `KeyError`: if `chaining` is enabled and the `key` cannot be found.
+            `IndexError`: if `chaining` is enabled and the `index` is out of range.
+            `TypeError`: if the `value` is not of the expected `type`.
+            `TypeError`: if `chaining` is enabled and a `list` is indexed with a string.
 
         """
         val = self._get_item(key)
-        if not isinstance(val, type_):
-            raise TypeError(f"expected {val} to be {type_}, not {type(val)}")
-        return val
+        return expect(val, type_, key_type=key_type, value_type=value_type)
