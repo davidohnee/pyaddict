@@ -3,7 +3,7 @@
 from typing import Any, overload
 
 from pyaddict.chain import ChainLink, traverse
-from pyaddict.common import JObject
+from pyaddict.common import JObject, ensure, ensure_cast, expect, optional_get
 
 
 class JDict(dict):
@@ -28,7 +28,7 @@ class JDict(dict):
 
     def chain(self) -> "JDict":
         """
-        Enable chaining.
+        Enable chaining (nested access).
 
         Returns:
             self
@@ -39,7 +39,7 @@ class JDict(dict):
 
     def no_chain(self) -> "JDict":
         """
-        Disable chaining.
+        Disable chaining (nested access).
 
         Returns:
             self
@@ -92,42 +92,38 @@ class JDict(dict):
         """
         Get the value if it matches the target type.
 
+        Args:
+            key: path to the `value`.
+            type_: expected type of `value`.
+            default: default value to use.
+            key_type: expected type of all keys of `value`,
+                if `value` is a `dict`, and `key_type` is not `None`.
+            value_type: expected type of all values of `value`,
+                if `value` is a `dict` or `list`, and `value_type` is not `None`.
+
         Returns:
-            value at path: if value found and has the expected type.
-            default: if value not found or not the expected type.
-            None: if value not found and no default provided.
+            `value` at `key`: if `value` found and has the expected `type`.
+            `default`: if `value` not found or not of the expected `type`.
+            `None`: if `value` not found and no `default` provided.
 
         Raises:
-            KeyError: if chaining is enabled and the key
+            `KeyError`: if `chaining` is enabled and the `key`
                 (unless it is optional or the last one) cannot be found.
-            IndexError: if chaining is enabled and the index
+            `IndexError`: if `chaining` is enabled and the `index`
                 (unless it is optional or the last one) is out of range.
-            TypeError: if chaining is enabled and a list is indexed with a string
+            `TypeError`: if `chaining` is enabled and a `list` is indexed with a string.
 
         """
         value = self._get_item(key, optional=True)
-        if type_ and not isinstance(value, type_):
-            return default
-        if value is None:
-            return default
-
-        if isinstance(value, list) and value_type is not None:
-            return [x if isinstance(x, value_type) else None for x in value]
-
-        if isinstance(value, dict) and value_type is not None and key_type is not None:
-            return {
-                k: v if isinstance(v, value_type) else None
-                for k, v in value.items()
-                if isinstance(k, key_type)
-            }
-
-        return value
+        return optional_get(
+            value, type_, default, key_type=key_type, value_type=value_type
+        )
 
     @overload
-    def ensure[T](self, key: str, type_: type[T]): ...
+    def ensure[T](self, key: str, type_: type[T]) -> T: ...
 
     @overload
-    def ensure[T](self, key: str, type_: type[T], default: T): ...
+    def ensure[T](self, key: str, type_: type[T], default: T) -> T: ...
 
     @overload
     def ensure[V](
@@ -137,18 +133,18 @@ class JDict(dict):
         default: list[V] | None = None,
         *,
         value_type: type[V],
-    ): ...
+    ) -> list[V]: ...
 
     @overload
     def ensure[K, V](
         self,
         key: str,
         type_: type[dict],
-        default: dict[K, V] | None,
+        default: dict[K, V] | None = None,
         *,
         key_type: type[K],
         value_type: type[V],
-    ): ...
+    ) -> dict[K, V]: ...
 
     def ensure[T, K, V](
         self,
@@ -162,38 +158,34 @@ class JDict(dict):
         """
         Get the value if it matches the target type.
 
+        Args:
+            key: path to the `value`.
+            type_: expected type of `value`.
+            default: default value to use.
+            key_type: expected type of all keys of `value`,
+                if `value` is a `dict`, and `key_type` is not `None`.
+            value_type: expected type of all values of `value`,
+                if `value` is a `dict` or `list`, and `value_type` is not `None`.
+
         Returns:
-            value at path: if value found and has the expected type.
-            default: if value not found or not the expected type.
-            type(): if value not found and no default provided.
+            `value` at `key`: if `value` found and has the expected `type`.
+            `default`: if `value` not found or not of the expected `type`.
+            `type()`: if `value` not found and no `default` provided.
 
         """
         try:
             value = self._get_item(key)
-            if isinstance(value, type_):
-                if isinstance(value, list) and value_type is not None:
-                    return [x for x in value if isinstance(x, value_type)]
-                if (
-                    isinstance(value, dict)
-                    and value_type is not None
-                    and key_type is not None
-                ):
-                    return {
-                        k: v
-                        for k, v in value.items()
-                        if isinstance(k, key_type) and isinstance(v, value_type)
-                    }
-
-                return value
-            return default or type_()
+            return ensure(
+                value, type_, default, key_type=key_type, value_type=value_type
+            )
         except:  # noqa: E722
             return default or type_()
 
     @overload
-    def ensure_cast[T](self, key: str, type_: type[T]): ...
+    def ensure_cast[T](self, key: str, type_: type[T]) -> T: ...
 
     @overload
-    def ensure_cast[T](self, key: str, type_: type[T], default: T): ...
+    def ensure_cast[T](self, key: str, type_: type[T], default: T) -> T: ...
 
     @overload
     def ensure_cast[V](
@@ -203,18 +195,18 @@ class JDict(dict):
         default: list[V] | None = None,
         *,
         value_type: type[V],
-    ): ...
+    ) -> list[V]: ...
 
     @overload
     def ensure_cast[K, V](
         self,
         key: str,
         type_: type[dict],
-        default: dict[K, V] | None,
+        default: dict[K, V] | None = None,
         *,
         key_type: type[K],
         value_type: type[V],
-    ): ...
+    ) -> dict[K, V]: ...
 
     def ensure_cast[T, K, V](
         self,
@@ -224,18 +216,30 @@ class JDict(dict):
         *,
         key_type: type[K] | None = None,
         value_type: type[V] | None = None,
-    ) -> T:
+    ) -> Any:
         """
-        Get the value and try to cast it to the target type.
+        Get the `value` and try to cast it to the target type.
+
+        Args:
+            key: path to the `value`.
+            type_: expected type of `value`.
+            default: default value to use.
+            key_type: expected type of all keys of `value`,
+                if `value` is a `dict`, and `key_type` is not `None`.
+            value_type: expected type of all values of `value`,
+                if `value` is a `dict` or `list`, and `value_type` is not `None`.
 
         Returns:
-            value at path: if value found.
-            default: if value not found.
-            type(): if value not found and no default provided.
+            `value` at `key`: if `value` found.
+            `default`: if `value` not found.
+            `type()`: if `value` not found and no `default` provided.
 
         """
         try:
-            return type_(self._get_item(key))  # ty: ignore[too-many-positional-arguments]
+            value = self._get_item(key)
+            return ensure_cast(
+                value, type_, default, key_type=key_type, value_type=value_type
+            )
         except:  # noqa: E722
             return default or type_()
 
@@ -259,21 +263,27 @@ class JDict(dict):
         *,
         key_type: type[K] | None = None,
         value_type: type[V] | None = None,
-    ) -> T:
+    ) -> Any:
         """
-        Expect the value to be present and of the specified type.
+        Expect the `value` to be present and of the specified `type`.
+
+        Args:
+            key: path to the `value`.
+            type_: expected type of `value`.
+            key_type: expected type of all keys of `value`,
+                if `value` is a `dict`, and `key_type` is not `None`.
+            value_type: expected type of all values of `value`,
+                if `value` is a `dict` or `list`, and `value_type` is not `None`.
 
         Returns:
-            value at path.
+            `value` at path.
 
         Raises:
-            IndexError: if the index is out of range.
-            TypeError: if the value is not of the expected type.
-            TypeError: if chaining is enabled and the list is indexed with a string
-            KeyError: if chaining is enabled and the key cannot be found.
+            `KeyError`: if `chaining` is enabled and the `key` cannot be found.
+            `IndexError`: if `chaining` is enabled and the `index` is out of range.
+            `TypeError`: if the `value` is not of the expected `type`.
+            `TypeError`: if `chaining` is enabled and a `list` is indexed with a string.
 
         """
         val = self._get_item(key)
-        if not isinstance(val, type_):
-            raise TypeError(f"expected {val} to be {type_}, not {type(val)}")
-        return val
+        return expect(val, type_, key_type=key_type, value_type=value_type)

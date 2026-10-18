@@ -118,3 +118,27 @@ def test_chain_expect() -> None:
     assert jlist.expect("0.age", int) == 12
     with pytest.raises(TypeError):
         assert jlist.expect("0.age", float)
+
+
+def test_get_list_with_checked_items() -> None:
+    jdata = JList([["apple", "banana", 1, 2, 3]])
+    mylist = jdata.optional_get(0, list, value_type=str)
+    assert mylist == ["apple", "banana", None, None, None]
+    mylist = jdata.ensure(0, list, value_type=str)
+    assert mylist == ["apple", "banana"]
+    mylist = jdata.ensure_cast(0, list, value_type=str)
+    assert mylist == ["apple", "banana", "1", "2", "3"]
+    with pytest.raises(TypeError):
+        mylist = jdata.expect(0, list, value_type=str)
+
+
+def test_get_dict_with_checked_items() -> None:
+    jdata = JList([{"basket": ["apple"], "price": 5, 1: 2}])
+    mydict = jdata.optional_get(0, dict, key_type=str, value_type=int)
+    assert mydict == {"basket": None, "price": 5}
+    mydict = jdata.ensure(0, dict, key_type=str, value_type=int)
+    assert mydict == {"price": 5}
+    mydict = jdata.ensure_cast(0, dict, key_type=str, value_type=int)
+    assert mydict == {"basket": 0, "price": 5, "1": 2}
+    with pytest.raises(TypeError):
+        mydict = jdata.expect(0, dict, key_type=str, value_type=int)
