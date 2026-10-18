@@ -13,6 +13,7 @@ def test_jdict() -> None:
             {"model": "BMW 230", "mpg": 27.5},
             {"model": "Ford Edge", "mpg": 24.1},
         ],
+        "children": ["Alice", "Bob"],
     }
 
     jdict = JDict(data).chain()  # enable chaining
@@ -23,6 +24,7 @@ def test_jdict() -> None:
     with pytest.raises(KeyError):
         jdict.expect("address", str)  # KeyError: key 'address' not found
     assert jdict.expect("cars[0].mpg", float) == 27.5
+    assert jdict.expect("children", list, value_type=str) == ["Alice", "Bob"]
 
     # if we prefer None
     assert jdict.optional_get("name", str) == "John"
@@ -34,6 +36,8 @@ def test_jdict() -> None:
     with pytest.raises(IndexError):
         jdict.optional_get("cars[2].mpg", str)  # IndexError: out of range
     assert jdict.optional_get("cars[2]?.mpg", str) is None
+    assert jdict.optional_get("children", list) == ["Alice", "Bob"]
+    assert jdict.optional_get("children", list, value_type=int) == [None, None]
 
     # if we don't care whether it exists or not
     assert jdict.ensure("name", str) == "John"
@@ -44,6 +48,7 @@ def test_jdict() -> None:
     assert jdict.ensure("cars[].model", list) == ["BMW 230", "Ford Edge"]
     assert jdict.ensure("cars[0].mpg", float) == 27.5
     assert jdict.ensure("cars[0].mpg", int) == 0
+    assert jdict.ensure("children", list, value_type=int) == []
 
     # or cast to the desired type
     assert jdict.ensure_cast("cars[0].mpg", int) == 27
