@@ -5,9 +5,11 @@
 [![PyPI license](https://img.shields.io/pypi/l/pyaddict.svg)](https://pypi.python.org/pypi/pyaddict/)
 
 ## Description
+
 Yet another python library to safely work with json data. It implements many useful features such as optional chaining, schema validation, type casting, safe indexing and default values.
 
 ## Installation
+
 ```bash
 pip install pyaddict
 ```
@@ -25,7 +27,8 @@ data = {
     "cars": [
         {"model": "BMW 230", "mpg": 27.5},
         {"model": "Ford Edge", "mpg": 24.1}
-    ]
+    ],
+    "children": [ "Alice", "Bob" ]
 }
 
 jdict = JDict(data).chain()  # enable chaining
@@ -34,6 +37,7 @@ jdict.expect("name", str)  # "John"
 jdict.expect("name", int)  # TypeError: name is str, not int
 jdict.expect("address", str)  # KeyError: key 'address' not found
 jdict.expect("cars[0].mpg", float)  # 27.5 (because we enabled chaining)
+jdict.expect("children", list, value_type=str)  # [ "Alice", "Bob" ]
 
 # if we prefer None
 jdict.optional_get("name", str)  # "John"
@@ -43,6 +47,8 @@ jdict.optional_get("address.street", str)  # KeyError: address not found
 jdict.optional_get("address?.street", str)  # None
 jdict.optional_get("cars[2].mpg", str)  # IndexError: out of range
 jdict.optional_get("cars[2]?.mpg", str)  # None
+jdict.optional_get("children", list)  # ["Alice", "Bob"]
+jdict.optional_get("children", list, value_type=int)  # [ None, None ]
 
 # if we don't care whether it exists or not
 jdict.ensure("name", str)  # "John"
@@ -53,12 +59,14 @@ jdict.ensure("address", str, "moon")  # "moon"
 jdict.ensure("cars[].model", list)  # [ "BMW 230", "Ford Edge" ]
 jdict.ensure("cars[0].mpg", float)  # 27.5
 jdict.ensure("cars[0].mpg", int)  # 0, because cars[0].model is not an int
+jdict.ensure("children", list, value_type=int)  # [ ]
 
 # or cast to the desired type
 jdict.ensure_cast("cars[0].mpg", int) # 27
 ```
 
 Similar rules apply when working with lists:
+
 ```py
 from pyaddict import JList
 
@@ -78,6 +86,7 @@ jlist.expect("[].name", list)  # ["John", "Jane"]
 ```
 
 ### Validating json data
+
 ```py
 from pyaddict.schema import Anything, Array, Integer, Object, OneOf, String
 
@@ -118,7 +127,9 @@ result.error  # 'dogs' should be list, not int
 The library is fully typed and thus can be used with mypy & pylint. Check out the [wiki](https://github.com/davidohnee/pyaddict/wiki) for more information.
 
 ## License
+
 [MIT](LICENSE)
 
 ## Author
+
 [davidohnee](https://github.com/davidohnee)
