@@ -9,7 +9,7 @@ from pyaddict.schema.base import (
     RangePoint,
     RangePointType,
 )
-from pyaddict.schema.common import EnumSchemaTest, RangeSchemaTest
+from pyaddict.schema.common import EnumSchemaTest, RangeSchemaTest, format_repr
 from pyaddict.schema.result import ValidationError, ValidationResult
 
 
@@ -84,6 +84,15 @@ class _Integer[R](ISchemaType["_Integer[R]", R]):
             result.update(test.test(result.unwrap_or(value), path))
 
         return cast(ValidationResult[R], result)
+
+    def __repr__(self) -> str:
+        fields: list[str] = []
+        fields.append(repr(self._range))
+        if self._enum:
+            fields.append(f"one of: {self._enum}")
+        if self._nullable:
+            fields.append("nullable")
+        return "Integer(" + format_repr(fields) + ")"
 
 
 Integer = _Integer[int]

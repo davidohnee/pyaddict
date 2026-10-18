@@ -1,6 +1,7 @@
 """Array schema definition."""
 
 import json
+import textwrap
 from typing import Any, cast
 
 from pyaddict.schema.base import (
@@ -11,7 +12,7 @@ from pyaddict.schema.base import (
     RangePointType,
     Validatable,
 )
-from pyaddict.schema.common import RangeSchemaTest, validate
+from pyaddict.schema.common import RangeSchemaTest, format_repr, validate
 from pyaddict.schema.result import ValidationError, ValidationResult
 
 
@@ -127,6 +128,28 @@ class _Array[R](ISchemaType["_Array[R]", R]):
                 )
 
         return cast(ValidationResult[R], result)
+
+    def __repr__(self) -> str:
+        fields: list[str] = []
+
+        if self._item:
+            fields.append(repr(self._item))
+
+        fields.append(f"length: {self._range}")
+        if self._item_at:
+            v = "must conform to: {\n"
+            v += "\n".join(
+                [
+                    f"\tat index '{k}':\n{textwrap.indent(repr(v), '\t\t')}"
+                    for k, v in self._item_at.items()
+                ]
+            )
+            v += "\n}"
+            fields.append(v)
+        if self._nullable:
+            fields.append("nullable")
+
+        return "Array(" + format_repr(fields) + ")"
 
 
 Array = _Array[list[Any]]

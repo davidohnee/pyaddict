@@ -22,6 +22,9 @@ class _Anything[R](ISchemaType["_Anything[R]", R]):
 
         return ValidationResult.ok(value)
 
+    def __repr__(self) -> str:
+        return "Anything()"
+
 
 Anything = _Anything[Any]
 OptionalAnything = _Anything[Any | None]

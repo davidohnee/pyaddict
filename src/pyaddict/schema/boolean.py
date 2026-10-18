@@ -6,6 +6,7 @@ from pyaddict.schema.base import (
     ISchemaTest,
     ISchemaType,
 )
+from pyaddict.schema.common import format_repr
 from pyaddict.schema.result import ValidationError, ValidationResult
 
 
@@ -64,6 +65,12 @@ class _Boolean[R](ISchemaType["_Boolean[R]", R]):
             result.update(test.test(result.unwrap_or(value), path))
 
         return cast(ValidationResult[R], result)
+
+    def __repr__(self) -> str:
+        fields: list[str] = []
+        if self._nullable:
+            fields.append("nullable")
+        return "Boolean(" + format_repr(fields) + ")"
 
 
 Boolean = _Boolean[bool]

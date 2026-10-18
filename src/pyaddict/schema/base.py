@@ -113,6 +113,10 @@ class ISchemaType[C, T](ABC):
                 )
         return ValidationResult.ok(value, nullable=self._nullable)
 
+    @abstractmethod
+    def __repr__(self) -> str:
+        """Representation."""
+
 
 SchemaType = ISchemaType[Any, Any]
 Primitive = int | float | bool | str | dict | list

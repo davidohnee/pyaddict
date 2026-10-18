@@ -1,5 +1,6 @@
 """Common helpers."""
 
+import textwrap
 from typing import Any
 
 from pyaddict.schema.base import (
@@ -130,3 +131,10 @@ def validate(
     return ValidationResult.err(
         ValidationError(f"{val} does not equal {schema}", path, "equals")
     )
+
+
+def format_repr(fields: list[str]) -> str:
+    """Format fields of a schema."""
+    if len(fields) == 0:
+        return ""
+    return "\n" + ",\n".join([textwrap.indent(f, "\t") for f in fields]) + "\n"
