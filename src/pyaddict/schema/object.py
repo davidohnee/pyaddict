@@ -2,13 +2,14 @@
 
 import json
 from typing import Any, cast
+import textwrap
 
 from pyaddict.schema.base import (
     ISchemaTest,
     ISchemaType,
     Validatable,
 )
-from pyaddict.schema.common import validate
+from pyaddict.schema.common import format_repr, validate
 from pyaddict.schema.result import ValidationError, ValidationResult
 
 ObjectBodyDefinition = dict[str, Validatable]
@@ -147,6 +148,25 @@ class _Object[R](ISchemaType["_Object[R]", R]):
 
     def __delitem__(self, key: str) -> None:
         del self._body[key]
+
+    def __repr__(self) -> str:
+        fields: list[str] = []
+        if self._body:
+            v = "{\n\t"
+            v += "\n\t".join(
+                [
+                    f"{k}:\n{textwrap.indent(repr(v), '\t\t')}"
+                    for k, v in self._body.items()
+                ]
+            )
+            v += "\n}"
+            fields.append(v)
+        if self._additional_properties:
+            fields.append("with additional properties")
+        if self._nullable:
+            fields.append("nullable")
+
+        return "Object(" + format_repr(fields) + ")"
 
 
 Object = _Object[dict[str, Any]]

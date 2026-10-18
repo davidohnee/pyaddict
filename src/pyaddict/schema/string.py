@@ -11,7 +11,7 @@ from pyaddict.schema.base import (
     RangePoint,
     RangePointType,
 )
-from pyaddict.schema.common import EnumSchemaTest, RangeSchemaTest
+from pyaddict.schema.common import EnumSchemaTest, RangeSchemaTest, format_repr
 from pyaddict.schema.result import ValidationError, ValidationResult
 
 
@@ -158,6 +158,19 @@ class _String[R](ISchemaType["_String[R]", R]):
             result.invalidate(range_result.error)
 
         return cast(ValidationResult[R], result)
+
+    def __repr__(self) -> str:
+        fields: list[str] = []
+        fields.append(repr(self._range))
+        if self._enum:
+            fields.append(f"one of: {self._enum}")
+        if self._regex:
+            fields.append(
+                f"matches all: \n\t{'\n\t'.join([repr(r) for r in self._regex])}"
+            )
+        if self._nullable:
+            fields.append("nullable")
+        return "String(" + format_repr(fields) + ")"
 
 
 String = _String[str]
