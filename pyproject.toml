@@ -1,6 +1,6 @@
 [project]
 name = "pyaddict"
-version = "2.1.3"
+version = "2.2.0"
 description = "yet another dict library"
 readme = "README.md"
 license = { file="LICENSE" }
